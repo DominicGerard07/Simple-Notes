@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes - Simple & Clean</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+</head>
+<body data-theme="light">
+  <div class="app-container">
+    <!-- Navigation Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon">📝</span>
+          <span class="logo-text">Simple<strong>Notes</strong></span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Universal search across all notes & subfolders... (/ or Ctrl+K)" autocomplete="off">
+          <button id="clearSearchBtn" class="clear-btn" title="Clear search" style="display: none;">&times;</button>
+          <kbd class="search-shortcut">/</kbd>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <button id="themeToggleBtn" class="icon-btn" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+          <span class="theme-icon">🌙</span>
+        </button>
+        <div class="dropdown-container">
+          <button id="backupMenuBtn" class="icon-btn" title="Backup & Restore" aria-label="Backup and restore">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+          <div id="backupMenu" class="dropdown-menu">
+            <button id="exportJsonBtn" class="dropdown-item">
+              <span>📥 Export JSON Backup</span>
+            </button>
+            <label class="dropdown-item">
+              <span>📤 Import JSON Backup</span>
+              <input type="file" id="importFileInput" accept=".json" style="display: none;">
+            </label>
+          </div>
+        </div>
+
+        <!-- User Account Profile Dropdown -->
+        <div id="userProfileContainer" class="dropdown-container user-dropdown-container" style="display: none;">
+          <button id="userMenuBtn" class="icon-btn user-menu-btn" title="Account profile" aria-label="User Account">
+            <span class="user-avatar-badge">👤</span>
+            <span id="headerUsername" class="header-username-text">User</span>
+            <span class="dropdown-caret">▾</span>
+          </button>
+          <div id="userMenuDropdown" class="dropdown-menu user-dropdown-menu">
+            <div class="user-dropdown-info">
+              <span id="dropdownUsername" class="user-dropdown-name">User</span>
+              <span id="dropdownEmail" class="user-dropdown-email">user@example.com</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button id="logoutBtn" class="dropdown-item logout-item">
+              <span>🚪 Log Out</span>
+            </button>
+          </div>
+        </div>
+
+        <button id="newNoteBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New Note</span>
+          <kbd class="btn-kbd">Ctrl+N</kbd>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div class="app-body">
+      <!-- Sidebar / Filters -->
+      <aside class="app-sidebar">
+        <!-- Views Section -->
+        <div class="sidebar-section">
+          <span class="sidebar-title">Views</span>
+          <button class="nav-item active" data-filter="all">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">All Notes</span>
+            <span class="nav-badge" id="allCount">0</span>
+          </button>
+          <button class="nav-item" data-filter="pinned">
+            <span class="nav-icon">📌</span>
+            <span class="nav-label">Pinned</span>
+            <span class="nav-badge" id="pinnedCount">0</span>
+          </button>
+        </div>
+
+        <!-- Folders Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-header-row">
+            <span class="sidebar-title">Folders</span>
+            <button id="newFolderBtn" class="sidebar-action-btn" title="Create New Folder" aria-label="Create New Folder">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+          </div>
+          <div id="foldersList" class="folders-container">
+            <!-- Dynamic Folders injected here -->
+          </div>
+        </div>
+
+        <!-- Tags Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-header-row">
+            <span class="sidebar-title">Tags</span>
+          </div>
+          <div id="tagsList" class="tags-container">
+            <!-- Dynamic Tags injected here -->
+          </div>
+        </div>
+      </aside>
+
+      <!-- Notes Feed Area -->
+      <main class="app-main">
+        <!-- Control Bar -->
+        <div class="control-bar">
+          <div class="active-filter-badge" id="activeFilterLabel">Showing All Notes</div>
+          <div class="controls-group">
+            <label class="sort-select-wrapper">
+              <span class="sort-label">Sort:</span>
+              <select id="sortSelect" class="select-input">
+                <option value="updated_desc">Recently Updated</option>
+                <option value="updated_asc">Oldest Updated</option>
+                <option value="created_desc">Recently Created</option>
+                <option value="created_asc">Oldest Created</option>
+                <option value="title_asc">Title (A - Z)</option>
+                <option value="title_desc">Title (Z - A)</option>
+              </select>
+            </label>
+            <div class="view-toggle">
+              <button id="viewGridBtn" class="icon-btn active" title="Grid View">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="3" width="7" height="7"></rect>
+                  <rect x="14" y="14" width="7" height="7"></rect>
+                  <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+              </button>
+              <button id="viewListBtn" class="icon-btn" title="List View">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Sections -->
+        <div id="pinnedSection" class="notes-section" style="display: none;">
+          <h2 class="section-title">
+            <span>📌 Pinned</span>
+          </h2>
+          <div id="pinnedGrid" class="notes-grid"></div>
+        </div>
+
+        <div id="othersSection" class="notes-section">
+          <h2 id="othersSectionTitle" class="section-title" style="display: none;">
+            <span>Notes</span>
+          </h2>
+          <div id="notesGrid" class="notes-grid"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <div class="empty-icon">📝</div>
+          <h3 class="empty-title">No notes found</h3>
+          <p class="empty-desc">Create your first note or try a different search filter.</p>
+          <button id="emptyCreateBtn" class="btn btn-primary">Create a Note</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Note Editor Modal -->
+  <div id="noteModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <input type="text" id="modalTitle" class="modal-title-input" placeholder="Note Title..." maxlength="200" autocomplete="off">
+        <div class="modal-header-actions">
+          <button type="button" id="insertTodoBtn" class="btn btn-secondary btn-sm" title="Add Checkbox">
+            <span>☑ Checkbox</span>
+          </button>
+          <button type="button" id="insertCodeBtn" class="btn btn-secondary btn-sm" title="Add Code Block">
+            <span>&lt;/&gt; Code</span>
+          </button>
+          <button id="modalPinBtn" class="icon-btn" title="Pin note">
+            <span class="pin-icon">📌</span>
+          </button>
+          <button id="modalCloseBtn" class="icon-btn close-btn" title="Close (Esc)">&times;</button>
+        </div>
+      </div>
+
+      <!-- Modal Progress Bar (Shown when checkboxes exist) -->
+      <div id="modalProgressBar" class="modal-progress-bar" style="display: none;">
+        <div class="progress-bar-track">
+          <div id="modalProgressFill" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div class="progress-info">
+          <span id="modalProgressCount" class="progress-count">0/0 completed</span>
+          <span id="modalProgressPercent" class="progress-percent">0%</span>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="modal-content-area">
+        <div id="modalEditor" class="modal-editor" contenteditable="true" spellcheck="true" data-placeholder="Start typing your note..."></div>
+      </div>
+
+      <!-- Note Settings (Folder, Tags, Color) -->
+      <div class="modal-meta-bar">
+        <div class="meta-field folder-field">
+          <span class="meta-icon">📁</span>
+          <select id="modalFolder" class="meta-select" title="Assign to folder">
+            <!-- Dynamic Folders injected here -->
+          </select>
+        </div>
+
+        <div class="meta-field tags-field">
+          <span class="meta-icon">🏷️</span>
+          <input type="text" id="modalTags" class="meta-input" placeholder="Tags (comma separated, e.g. Work, Ideas)">
+        </div>
+
+        <div class="meta-field color-field">
+          <span class="meta-label">Color:</span>
+          <div class="color-picker">
+            <button type="button" class="color-dot active" data-color="default" title="Default" style="--dot-color: var(--card-bg);"></button>
+            <button type="button" class="color-dot" data-color="blue" title="Blue" style="--dot-color: #3b82f6;"></button>
+            <button type="button" class="color-dot" data-color="green" title="Green" style="--dot-color: #22c55e;"></button>
+            <button type="button" class="color-dot" data-color="amber" title="Amber" style="--dot-color: #f59e0b;"></button>
+            <button type="button" class="color-dot" data-color="rose" title="Rose" style="--dot-color: #f43f5e;"></button>
+            <button type="button" class="color-dot" data-color="purple" title="Purple" style="--dot-color: #a855f7;"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <div class="footer-left">
+          <span id="wordCount" class="footer-info">0 words</span>
+          <span id="modalProgressFooter" class="footer-info" style="display: none;"></span>
+          <span id="noteDates" class="footer-info" style="display: none;"></span>
+        </div>
+        <div class="footer-right">
+          <button id="downloadTxtBtn" class="btn btn-secondary" title="Download note as Text (.txt)" style="display: none;">
+            <span>⬇ .txt</span>
+          </button>
+          <button id="modalDeleteBtn" class="btn btn-danger" style="display: none;">
+            <span>Delete</span>
+          </button>
+          <button id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
+          <button id="modalSaveBtn" class="btn btn-primary">Save Note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder Modal (Create / Rename) -->
+  <div id="folderModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card folder-modal-card">
+      <div class="modal-header">
+        <h3 id="folderModalTitle" class="folder-modal-heading">New Folder</h3>
+        <button id="folderModalCloseBtn" class="icon-btn close-btn" title="Close (Esc)">&times;</button>
+      </div>
+      <div class="folder-modal-body">
+        <label for="folderNameInput" class="folder-input-label">Folder Name</label>
+        <input type="text" id="folderNameInput" class="folder-name-input" placeholder="e.g. Science, Math, Projects..." maxlength="50" autocomplete="off">
+
+        <label for="folderParentSelect" class="folder-input-label" style="margin-top: 0.65rem;">Parent Folder (Subfolder Of)</label>
+        <select id="folderParentSelect" class="meta-select folder-parent-select" title="Parent folder">
+          <option value="">(None - Root Level)</option>
+        </select>
+        <p class="folder-input-hint">Select an existing folder to nest this folder inside it with guide lines.</p>
+
+        <div id="folderModalError" class="modal-error-message" style="display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <div class="footer-left"></div>
+        <div class="footer-right">
+          <button id="folderModalCancelBtn" class="btn btn-secondary">Cancel</button>
+          <button id="folderModalSaveBtn" class="btn btn-primary">Save Folder</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth Modal (Login / Sign Up / Forgot Password) -->
+  <div id="authModal" class="modal-backdrop auth-backdrop" style="display: none;">
+    <div class="modal-card auth-modal-card">
+      <div class="auth-header">
+        <div class="auth-brand">
+          <span class="auth-brand-icon">📒</span>
+          <span class="auth-brand-title">SimpleNotes</span>
+        </div>
+        <p class="auth-subtitle" id="authSubtitle">Log in to access your personal notes and folders</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabLoginBtn" data-tab="login">Log In</button>
+        <button type="button" class="auth-tab-btn" id="tabRegisterBtn" data-tab="register">Sign Up</button>
+        <button type="button" class="auth-tab-btn" id="tabForgotBtn" data-tab="forgot">Reset Password</button>
+      </div>
+
+      <!-- Log In Panel -->
+      <div id="panelLogin" class="auth-panel">
+        <form id="loginForm" class="auth-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="loginUsername">Username or Email</label>
+            <input type="text" id="loginUsername" class="meta-input auth-input" placeholder="e.g. demo or demo@example.com" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" class="meta-input auth-input" placeholder="Enter your password" required autocomplete="current-password">
+          </div>
+          <div id="loginError" class="modal-error-message" style="display: none;"></div>
+          <button type="submit" id="loginSubmitBtn" class="btn btn-primary auth-btn-full">
+            <span>Log In</span>
+          </button>
+          <div class="auth-footer-links">
+            <button type="button" class="link-btn" id="switchToForgotBtn">Forgot password?</button>
+            <span class="auth-dot">•</span>
+            <button type="button" class="link-btn" id="switchToRegisterBtn">Create account</button>
+          </div>
+          <div class="auth-demo-hint">
+            <span>Demo account: <code>demo</code> / <code>demo123</code></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sign Up Panel -->
+      <div id="panelRegister" class="auth-panel" style="display: none;">
+        <form id="registerForm" class="auth-form" onsubmit="return false;">
+          <div class="form-group">
+            <label for="registerUsername">Username</label>
+            <input type="text" id="registerUsername" class="meta-input auth-input" placeholder="Choose a username" required autocomplete="username" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="registerEmail">Email Address</label>
+            <input type="email" id="registerEmail" class="meta-input auth-input" placeholder="you@example.com" required autocomplete="email">
+            <small class="form-help-text">Used for password recovery codes</small>
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">Password</label>
+            <input type="password" id="registerPassword" class="meta-input auth-input" placeholder="At least 6 characters" required autocomplete="new-password">
+          </div>
+          <div id="registerError" class="modal-error-message" style="display: none;"></div>
+          <button type="submit" id="registerSubmitBtn" class="btn btn-primary auth-btn-full">
+            <span>Create Account</span>
+          </button>
+          <div class="auth-footer-links">
+            <span>Already have an account?</span>
+            <button type="button" class="link-btn" id="switchToLoginBtn1">Log In</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Forgot Password Panel -->
+      <div id="panelForgot" class="auth-panel" style="display: none;">
+        <!-- Step 1: Send Code -->
+        <div id="forgotStep1">
+          <p class="auth-panel-desc">Enter your account email to receive a 6-digit verification code.</p>
+          <form id="forgotStep1Form" class="auth-form" onsubmit="return false;">
+            <div class="form-group">
+              <label for="forgotEmail">Email Address</label>
+              <input type="email" id="forgotEmail" class="meta-input auth-input" placeholder="you@example.com" required autocomplete="email">
+            </div>
+            <div id="forgotStep1Msg" class="modal-error-message" style="display: none;"></div>
+            <button type="submit" id="forgotSendCodeBtn" class="btn btn-primary auth-btn-full">
+              <span>Send Verification Code</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Enter Code & New Password -->
+        <div id="forgotStep2" style="display: none;">
+          <p class="auth-panel-desc">Enter the 6-digit code sent to your email and your new password.</p>
+          <div id="forgotDevBanner" class="auth-dev-banner" style="display: none;"></div>
+          <form id="forgotStep2Form" class="auth-form" onsubmit="return false;">
+            <div class="form-group">
+              <label for="resetCodeInput">6-Digit Verification Code</label>
+              <input type="text" id="resetCodeInput" class="meta-input auth-input code-input" placeholder="123456" maxlength="6" pattern="[0-9]{6}" required autocomplete="one-time-code">
+            </div>
+            <div class="form-group">
+              <label for="resetNewPassword">New Password</label>
+              <input type="password" id="resetNewPassword" class="meta-input auth-input" placeholder="At least 6 characters" required autocomplete="new-password">
+            </div>
+            <div id="forgotStep2Msg" class="modal-error-message" style="display: none;"></div>
+            <button type="submit" id="resetSubmitBtn" class="btn btn-primary auth-btn-full">
+              <span>Reset Password</span>
+            </button>
+            <div class="auth-secondary-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="forgotBackToStep1Btn">← Change Email</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="auth-footer-links">
+          <button type="button" class="link-btn" id="switchToLoginBtn2">← Back to Log In</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast" style="display: none;"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
